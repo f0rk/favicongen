@@ -114,8 +114,8 @@ output_config = [
         "144x144",
     ),
     (
-        "ms-icon-1504x1504.png",
-        "1504x1504",
+        "ms-icon-150x150.png",
+        "150x150",
     ),
     (
         "ms-icon-310x310.png",
