@@ -1,0 +1,205 @@
+#!/usr/bin/env python
+
+import argparse
+import json
+import os.path
+import subprocess
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("source", help="source image to create the icon with")
+parser.add_argument("output", help="the directory to output the images to")
+parser.add_argument(
+    "--served-prefix",
+    help=(
+        "when generating manifest.json/browserconfig.xml, use this path to "
+        "indicate where the files are actually served from (default: /)"
+    ),
+    default="/",
+)
+
+args = parser.parse_args()
+
+
+if not os.path.exists(args.output):
+    os.makedirs(args.output)
+
+output_config = [
+    (
+        "android-icon-144x144.png",
+        "144x144",
+    ),
+    (
+        "android-icon-192x192.png",
+        "192x192",
+    ),
+    (
+        "android-icon-36x36.png",
+        "36x36",
+    ),
+    (
+        "android-icon-48x48.png",
+        "48x48",
+    ),
+    (
+        "android-icon-72x72.png",
+        "72x72",
+    ),
+    (
+        "android-icon-96x96.png",
+        "96x96",
+    ),
+    (
+        "apple-icon-114x114.png",
+        "114x114",
+    ),
+    (
+        "apple-icon-120x120.png",
+        "120x120",
+    ),
+    (
+        "apple-icon-144x144.png",
+        "144x144",
+    ),
+    (
+        "apple-icon-152x152.png",
+        "152x152",
+    ),
+    (
+        "apple-icon-180x180.png",
+        "180x180",
+    ),
+    (
+        "apple-icon-57x57.png",
+        "57x57",
+    ),
+    (
+        "apple-icon-60x60.png",
+        "60x60",
+    ),
+    (
+        "apple-icon-72x72.png",
+        "72x72",
+    ),
+    (
+        "apple-icon-76x76.png",
+        "76x76",
+    ),
+    (
+        "apple-icon.png",
+        "192x192",
+    ),
+    (
+        "apple-icon-precomposed.png",
+        "192x192",
+    ),
+    (
+        "favicon-16x16.png",
+        "16x16",
+    ),
+    (
+        "favicon-32x32.png",
+        "32x32",
+    ),
+    (
+        "favicon-96x96.png",
+        "96x96",
+    ),
+    (
+        "favicon.ico",
+        "16x16",
+    ),
+    (
+        "ms-icon-144x144.png",
+        "144x144",
+    ),
+    (
+        "ms-icon-1504x1504.png",
+        "1504x1504",
+    ),
+    (
+        "ms-icon-310x310.png",
+        "310x310",
+    ),
+    (
+        "ms-icon-70x70.png",
+        "70x70",
+    ),
+]
+
+#android-icon-144x144.png    android-icon-72x72.png      apple-icon-144x144.png      apple-icon-60x60.png        apple-icon-precomposed.png  favicon-96x96.png           ms-icon-150x150.png         
+#android-icon-192x192.png    android-icon-96x96.png      apple-icon-152x152.png      apple-icon-72x72.png        browserconfig.xml           favicon.ico                 ms-icon-310x310.png         
+#android-icon-36x36.png      apple-icon-114x114.png      apple-icon-180x180.png      apple-icon-76x76.png        favicon-16x16.png           manifest.json               ms-icon-70x70.png           
+#android-icon-48x48.png      apple-icon-120x120.png      apple-icon-57x57.png        apple-icon.png              favicon-32x32.png           ms-icon-144x144.png       
+
+for name, sizing in output_config:
+
+    output_file_path = os.path.join(args.output, name)
+
+    resize_args = [
+        "convert",
+        args.source,
+        "-resize",
+        sizing,
+        output_file_path,
+    ]
+
+    resize_process = subprocess.Popen(resize_args)
+    resize_process.communicate()
+
+    if resize_process.returncode != 0:
+        raise Exception("Resizing image failed")
+
+manifest_path = os.path.join(args.output, "manifest.json")
+with open(manifest_path, "w") as manifest_fp:
+    manifest_data = {
+        "name": "App",
+	"icons": [
+             {
+                  "src": "{prefix}android-icon-36x36.png".format(prefix=args.served_prefix),
+                  "sizes": "36x36",
+                  "type": "image/png",
+                  "density": "0.75",
+             },
+             {
+                  "src": "{prefix}android-icon-48x48.png".format(prefix=args.served_prefix),
+                  "sizes": "48x48",
+                  "type": "image/png",
+                  "density": "1.0",
+             },
+             {
+                  "src": "{prefix}android-icon-72x72.png".format(prefix=args.served_prefix),
+                  "sizes": "72x72",
+                  "type": "image/png",
+                  "density": "1.5",
+             },
+             {
+                  "src": "{prefix}android-icon-96x96.png".format(prefix=args.served_prefix),
+                  "sizes": "96x96",
+                  "type": "image/png",
+                  "density": "2.0",
+             },
+             {
+                  "src": "{prefix}android-icon-144x144.png".format(prefix=args.served_prefix),
+                  "sizes": "144x144",
+                  "type": "image/png",
+                  "density": "3.0",
+             },
+             {
+                  "src": "{prefix}android-icon-192x192.png".format(prefix=args.served_prefix),
+                  "sizes": "192x192",
+                  "type": "image/png",
+                  "density": "4.0",
+             }
+	]
+    }
+
+    manifest_fp.write(json.dumps(manifest_data, indent=" "))
+
+browserconfig_path = os.path.join(args.output, "browserconfig.xml")
+with open(browserconfig_path, "w") as browserconfig_fp:
+    
+    browserconfig_data = """<?xml version="1.0" encoding="utf-8"?>
+<browserconfig><msapplication><tile><square70x70logo src="{prefix}ms-icon-70x70.png"/><square150x150logo src="{prefix}ms-icon-150x150.png"/><square310x310logo src="{prefix}ms-icon-310x310.png"/><TileColor>#ffffff</TileColor></tile></msapplication></browserconfig>""".format(prefix=args.served_prefix)
+
+    browserconfig_fp.write(browserconfig_data)
